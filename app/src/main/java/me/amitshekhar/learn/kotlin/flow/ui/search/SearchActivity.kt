@@ -2,10 +2,22 @@ package me.amitshekhar.learn.kotlin.flow.ui.search
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import kotlinx.android.synthetic.main.activity_search.*
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
-import me.amitshekhar.learn.kotlin.flow.R
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.launch
+import me.amitshekhar.learn.kotlin.flow.databinding.ActivitySearchBinding
 import me.amitshekhar.learn.kotlin.flow.utils.DefaultDispatcherProvider
 import me.amitshekhar.learn.kotlin.flow.utils.getQueryTextChangeStateFlow
 import kotlin.coroutines.CoroutineContext
@@ -14,12 +26,14 @@ class SearchActivity : AppCompatActivity(), CoroutineScope {
 
     override val coroutineContext: CoroutineContext
         get() = Dispatchers.Main + job
+    private lateinit var binding: ActivitySearchBinding
 
     private lateinit var job: Job
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_search)
+        binding = ActivitySearchBinding.inflate(layoutInflater)
+        setContentView(binding.root)
         job = Job()
         setUpSearchStateFlow()
     }
@@ -31,11 +45,11 @@ class SearchActivity : AppCompatActivity(), CoroutineScope {
 
     private fun setUpSearchStateFlow() {
         launch {
-            searchView.getQueryTextChangeStateFlow()
+            binding.searchView.getQueryTextChangeStateFlow()
                 .debounce(300)
                 .filter { query ->
                     if (query.isEmpty()) {
-                        textViewResult.text = ""
+                        binding.textViewResult.text = ""
                         return@filter false
                     } else {
                         return@filter true
@@ -50,7 +64,7 @@ class SearchActivity : AppCompatActivity(), CoroutineScope {
                 }
                 .flowOn(DefaultDispatcherProvider().default)
                 .collect { result ->
-                    textViewResult.text = result
+                    binding.textViewResult.text = result
                 }
         }
     }
